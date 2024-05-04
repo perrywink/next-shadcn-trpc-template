@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Supplier {
+  id             Int         @id @default(autoincrement())
+  name           String
+  inventoryItems Inventory[]
+  invoices       Invoice[]
+
+  @@map("supplier")
+}
+
+model Inventory {
+  id                  Int              @id @default(autoincrement())
+  itemNo              String           @unique @map("item_no")
+  supplierItemNo      String           @unique @map("supplier_item_no")
+  barcodeNo           String           @map("barcode_no")
+  retailPrice         Decimal          @map("retail_price")
+  description         String
+  secondDescription   String           @map("second_description")
+  retailGst           Decimal          @map("retail_gst")
+  wholesalePrice      Decimal          @map("wholesale_price")
+  wholesaleGst        Decimal          @map("wholesale_gst")
+  costPrice           Decimal          @map("cost_price")
+  costGst             Decimal          @map("cost_gst")
+  salesTaxCode        String           @map("sales_tax_code") @db.VarChar(64)
+  purchaseTaxCode     String           @map("purchase_tax_code") @db.VarChar(64)
+  categoryCode        String           @map("category_code") @db.VarChar(64)
+  subcategoryCode     String           @map("subcategory_code") @db.VarChar(64)
+  supplierId          Int              @map("supplier_id")
+  supplier            Supplier         @relation(fields: [supplierId], references: [id])
+  minimumQty          Int              @map("minimum_qty")
+  reorderQty          Int              @map("reorder_qty")
+  qty                 Int
+  checkReport         String           @map("check_report")
+  categoryDescription String           @map("category_description")
+  memo                String
+  deliveryRecords     DeliveryRecord[]
+  invoiceId           Int              @map("invoice_id")
+  invoice             Invoice          @relation(fields: [invoiceId], references: [id])
+
+  @@map("inventory")
+}
+
+model DeliveryRecord {
+  id           Int       @id @default(autoincrement())
+  qty          Int
+  expiryDate   String    @map("expiry_date")
+  deliveryDate String    @map("delivery_date")
+  invoiceId    Int       @map("invoice_id")
+  invoice      Invoice   @relation(fields: [invoiceId], references: [id])
+  inventoryId  Int       @map("inventory_id")
+  inventory    Inventory @relation(fields: [inventoryId], references: [id])
+
+  @@map("delivery_record")
+}
+
+model Invoice {
+  id              Int              @id @default(autoincrement())
+  invoiceNo       String           @unique @map("invoice_no")
+  date            String
+  supplierId      Int              @map("supplier_id")
+  reviewed        Boolean          @default(false)
+  total           Decimal          @default(0)
+  supplier        Supplier         @relation(fields: [supplierId], references: [id])
+  inventoryItems  Inventory[]
+  deliveryRecords DeliveryRecord[]
+
+  @@map("invoice")
+}
